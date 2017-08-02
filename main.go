@@ -110,11 +110,13 @@ func main() {
 		color.NoColor = true // disables colorized output
 	}
 
-	// success := color.New(color.FgBlack, color.BgGreen, color.Bold).SprintFunc()
+	// success := color.New(color.FgGreen, color.Bold).SprintFunc()
 
 	fail := color.New(color.FgWhite, color.BgRed).SprintFunc()
 
-	next := color.New(color.FgBlack, color.BgYellow).SprintFunc()
+	alert := color.New(color.FgBlack, color.BgYellow).SprintFunc()
+
+	info := color.New(color.FgCyan, color.Bold).SprintFunc()
 
 	if !stringInSlice(*text, textTypes) {
 		exitWithError(fail(fmt.Sprintf("Error! Accepted text types are: %s", strings.Join(textTypes, ", "))))
@@ -138,34 +140,33 @@ func main() {
 
 	numPages := int(pages)
 
-	fmt.Println()
+	fmt.Println(info("Welcome to logy. The best parser for filtering and handling log files with ease.\n"))
 
 	output := parseFile(*file, currentPage, *lines)
 
 	fmt.Println(output)
 
-	fmt.Print(next(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
+	fmt.Print(alert(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
 
 	in := bufio.NewScanner(os.Stdin)
 
 	for in.Scan() {
 		inputPage, err := strconv.Atoi(in.Text())
 		if err != nil {
-			log.Print(fail("Error! A valid number is required"))
-			fmt.Print(next(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
+			fmt.Printf("\n%s\n\n", fail("Error! A valid number is required"))
+			fmt.Print(alert(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
 		} else {
 			if inputPage > numPages {
-				log.Print(fail(fmt.Sprintf("Error! Page number cannot be greater than %d", numPages)))
-				fmt.Print(next(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
+				fmt.Printf("\n%s\n\n", fail(fmt.Sprintf("Error! Page number cannot be greater than %d", numPages)))
+				fmt.Print(alert(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
 			} else if inputPage < 1 {
-				log.Print(fail("Error! Page number cannot be smaller than 1"))
-				fmt.Print(next(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
+				fmt.Printf("\n%s\n\n", fail("Error! Page number cannot be smaller than 1"))
+				fmt.Print(alert(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
 			} else {
 				currentPage = inputPage
-				fmt.Println()
 				output := parseFile(*file, currentPage, *lines)
-				fmt.Println(output)
-				fmt.Print(next(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
+				fmt.Printf("\n%s\n", output)
+				fmt.Print(alert(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
 			}
 		}
 	}
