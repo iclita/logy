@@ -63,7 +63,7 @@ func exitWithError(s string) {
 	os.Exit(1)
 }
 
-func parseFile(file string, page, lines int) {
+func parseFile(file string, page, lines int) string {
 
 	f, err := os.Open(file)
 	if err != nil {
@@ -93,7 +93,7 @@ func parseFile(file string, page, lines int) {
 		log.Fatal(err)
 	}
 
-	fmt.Println(output.String())
+	return output.String()
 }
 
 func main() {
@@ -102,7 +102,7 @@ func main() {
 	lines := flag.Int("lines", 100, "Number of lines per page. Defaults to 100")
 	page := flag.Int("page", 1, "Current page number. Defaults to 1")
 	noColor := flag.Bool("no-color", false, "Disable color output. Defaults to false")
-	// search := flag.String("search", "", "Text to filter")
+	// filter := flag.String("filter", "", "Text to filter")
 
 	flag.Parse()
 
@@ -140,7 +140,9 @@ func main() {
 
 	fmt.Println()
 
-	parseFile(*file, currentPage, *lines)
+	output := parseFile(*file, currentPage, *lines)
+
+	fmt.Println(output)
 
 	fmt.Print(next(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
 
@@ -161,7 +163,8 @@ func main() {
 			} else {
 				currentPage = inputPage
 				fmt.Println()
-				parseFile(*file, currentPage, *lines)
+				output := parseFile(*file, currentPage, *lines)
+				fmt.Println(output)
 				fmt.Print(next(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
 			}
 		}
