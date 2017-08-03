@@ -116,6 +116,39 @@ func (p *parser) Parse() {
 	}
 }
 
+func parseFile(file string, page, lines int) string {
+
+	f, err := os.Open(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	s := bufio.NewScanner(f)
+
+	current := 0
+
+	var output bytes.Buffer
+
+	skip := (page - 1) * lines
+
+	for s.Scan() {
+		if current >= skip {
+			output.WriteString(s.Text() + "\n")
+		}
+		current++
+		if current >= lines+skip {
+			break
+		}
+	}
+
+	if err := s.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return output.String()
+}
+
 func lineCounter(file string) (int, error) {
 
 	f, err := os.Open(file)
@@ -154,37 +187,4 @@ func stringInSlice(a string, list []string) bool {
 func exitWithError(s string) {
 	io.WriteString(os.Stderr, s)
 	os.Exit(1)
-}
-
-func parseFile(file string, page, lines int) string {
-
-	f, err := os.Open(file)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-
-	s := bufio.NewScanner(f)
-
-	current := 0
-
-	var output bytes.Buffer
-
-	skip := (page - 1) * lines
-
-	for s.Scan() {
-		if current >= skip {
-			output.WriteString(s.Text() + "\n")
-		}
-		current++
-		if current >= lines+skip {
-			break
-		}
-	}
-
-	if err := s.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	return output.String()
 }
