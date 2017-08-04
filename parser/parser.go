@@ -19,6 +19,7 @@ var (
 		"plain",
 		"json",
 		"html",
+		"xml",
 	}
 
 	currentPage int
@@ -79,8 +80,6 @@ func (p *parser) Parse() {
 	pages = math.Ceil(pages)
 
 	numPages := int(pages)
-
-	fmt.Println(info("Welcome to logy. The best parser for filtering and handling log files with ease.\n"))
 
 	output := parseFile(p.file, currentPage, p.lines)
 
