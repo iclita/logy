@@ -39,16 +39,18 @@ type parser struct {
 	filter  string
 	lines   int
 	page    int
+	regex   bool
 	noColor bool
 }
 
 // New returns a new parser
-func New(file, text, filter string, lines, page int, noColor bool) *parser {
+func New(file, text, filter string, lines, page int, regex, noColor bool) *parser {
 	return &parser{
 		file:    file,
 		text:    text,
 		lines:   lines,
 		page:    page,
+		regex:   regex,
 		noColor: noColor,
 	}
 }
