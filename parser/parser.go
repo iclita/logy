@@ -71,7 +71,7 @@ func (p *parser) Parse() {
 
 	currentPage := p.page
 
-	n, err := lineCounter(p.file)
+	n, err := p.countLines()
 
 	if err != nil {
 		log.Fatal(err)
@@ -83,7 +83,7 @@ func (p *parser) Parse() {
 
 	numPages := int(pages)
 
-	output := parseFile(p.file, currentPage, p.lines)
+	output := p.getFilePage(currentPage)
 
 	fmt.Println(output)
 
@@ -105,7 +105,7 @@ func (p *parser) Parse() {
 				fmt.Print(alert(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
 			} else {
 				currentPage = inputPage
-				output := parseFile(p.file, currentPage, p.lines)
+				output := p.getFilePage(currentPage)
 				fmt.Printf("\n%s\n", output)
 				fmt.Print(alert(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
 			}
@@ -117,9 +117,9 @@ func (p *parser) Parse() {
 	}
 }
 
-func parseFile(file string, page, lines int) string {
+func (p *parser) getFilePage(page int) string {
 
-	f, err := os.Open(file)
+	f, err := os.Open(p.file)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -131,14 +131,14 @@ func parseFile(file string, page, lines int) string {
 
 	var output bytes.Buffer
 
-	skip := (page - 1) * lines
+	skip := (page - 1) * p.lines
 
 	for s.Scan() {
 		if current >= skip {
 			output.WriteString(s.Text() + "\n")
 		}
 		current++
-		if current >= lines+skip {
+		if current >= p.lines+skip {
 			break
 		}
 	}
@@ -150,21 +150,21 @@ func parseFile(file string, page, lines int) string {
 	return output.String()
 }
 
-func lineCounter(file string) (int, error) {
+func (p *parser) countLines() (int, error) {
 
-	f, err := os.Open(file)
+	f, err := os.Open(p.file)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer f.Close()
 
-	buf := make([]byte, 32*1024)
+	buf := make([]byte, 32*1024*1024)
 	count := 1
 	lineSep := []byte{'\n'}
 
 	for {
-		c, err := f.Read(buf)
-		count += bytes.Count(buf[:c], lineSep)
+		n, err := f.Read(buf)
+		count += bytes.Count(buf[:n], lineSep)
 
 		switch {
 		case err == io.EOF:
@@ -176,9 +176,9 @@ func lineCounter(file string) (int, error) {
 	}
 }
 
-func stringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
+func stringInSlice(s string, list []string) bool {
+	for _, v := range list {
+		if v == s {
 			return true
 		}
 	}
