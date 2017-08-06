@@ -9,8 +9,28 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
+// func init() {
+// 	b, err := ioutil.ReadFile("test.log")
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+
+// 	f, err := os.OpenFile("plain.log", os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	defer f.Close()
+
+// 	for i := 0; i < 100000; i++ {
+// 		_, err := f.Write(b)
+// 		if err != nil {
+// 			log.Fatal(err)
+// 		}
+// 	}
+// }
+
 func showHelp() {
-	fmt.Println("Welcome to logy. The best parser for filtering and handling log files with ease.")
+	fmt.Println("Welcome to logy. The best parser for filtering and handling log files of any size with ease.")
 	fmt.Println("Below is a table explaining the usage of this little utility.")
 
 	data := [][]string{
