@@ -69,6 +69,8 @@ func main() {
 
 	flag.Parse()
 
+	fmt.Println()
+
 	if len(os.Args) == 1 {
 		showHelp()
 		return

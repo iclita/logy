@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -71,19 +70,15 @@ func (p *parser) Parse() {
 
 	currentPage := p.page
 
-	n, err := p.countLines()
+	pageOffsets, err := p.countLines()
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	pages := float64(n) / float64(p.lines)
+	numPages := len(pageOffsets)
 
-	pages = math.Ceil(pages)
-
-	numPages := int(pages)
-
-	output := p.getFilePage(currentPage)
+	output := p.getFilePage(pageOffsets[currentPage-1])
 
 	fmt.Println(output)
 
@@ -105,7 +100,7 @@ func (p *parser) Parse() {
 				fmt.Print(alert(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
 			} else {
 				currentPage = inputPage
-				output := p.getFilePage(currentPage)
+				output := p.getFilePage(pageOffsets[currentPage-1])
 				fmt.Printf("\n%s\n", output)
 				fmt.Print(alert(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
 			}
@@ -117,7 +112,7 @@ func (p *parser) Parse() {
 	}
 }
 
-func (p *parser) getFilePage(page int) string {
+func (p *parser) getFilePage(offset int64) string {
 
 	f, err := os.Open(p.file)
 	if err != nil {
@@ -125,20 +120,21 @@ func (p *parser) getFilePage(page int) string {
 	}
 	defer f.Close()
 
+	_, err = f.Seek(int64(offset), io.SeekStart)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	s := bufio.NewScanner(f)
 
-	current := 0
+	var current int
 
 	var output bytes.Buffer
 
-	skip := (page - 1) * p.lines
-
 	for s.Scan() {
-		if current >= skip {
-			output.WriteString(s.Text() + "\n")
-		}
 		current++
-		if current >= p.lines+skip {
+		fmt.Fprintf(&output, "%s\n", s.Text())
+		if current >= p.lines {
 			break
 		}
 	}
@@ -150,7 +146,7 @@ func (p *parser) getFilePage(page int) string {
 	return output.String()
 }
 
-func (p *parser) countLines() (int, error) {
+func (p *parser) countLines() ([]int64, error) {
 
 	f, err := os.Open(p.file)
 	if err != nil {
@@ -158,20 +154,43 @@ func (p *parser) countLines() (int, error) {
 	}
 	defer f.Close()
 
-	buf := make([]byte, 32*1024*1024)
-	count := 1
-	lineSep := []byte{'\n'}
+	fi, err := f.Stat()
+	if err != nil {
+		log.Fatal(err)
+	}
+	lastPosition := fi.Size()
+
+	r := bufio.NewReader(f)
+
+	var pageOffsets []int64
+	var currentLine int
+	var lastOffset int64
+	var offset int64
+
+	if p.filter == "" {
+		pageOffsets = append(pageOffsets, offset)
+	}
 
 	for {
-		n, err := f.Read(buf)
-		count += bytes.Count(buf[:n], lineSep)
+		currentLine++
+		bs, err := r.ReadBytes('\n')
+		offset += int64(len(bs))
+		if currentLine == p.lines {
+			lastOffset = pageOffsets[len(pageOffsets)-1]
+			offset += lastOffset
+			if offset < lastPosition {
+				pageOffsets = append(pageOffsets, offset)
+			}
+			currentLine = 0
+			offset = 0
+		}
 
 		switch {
 		case err == io.EOF:
-			return count, nil
+			return pageOffsets, nil
 
 		case err != nil:
-			return count, err
+			return nil, err
 		}
 	}
 }
