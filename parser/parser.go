@@ -28,8 +28,6 @@ var (
 	fail = color.New(color.FgWhite, color.BgRed).SprintFunc()
 
 	alert = color.New(color.FgBlack, color.BgYellow).SprintFunc()
-
-	info = color.New(color.FgCyan, color.Bold).SprintFunc()
 )
 
 type parser struct {
