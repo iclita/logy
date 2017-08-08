@@ -23,11 +23,13 @@ var (
 
 	currentPage int
 
-	success = color.New(color.FgGreen, color.Bold).SprintFunc()
+	success = color.New(color.FgHiGreen, color.Bold).SprintFunc()
 
-	fail = color.New(color.FgWhite, color.BgRed).SprintFunc()
+	fail = color.New(color.FgHiWhite, color.BgRed).SprintFunc()
 
-	alert = color.New(color.FgBlack, color.BgYellow).SprintFunc()
+	alert = color.New(color.FgHiBlack, color.BgHiYellow, color.Bold).SprintFunc()
+
+	info = color.New(color.FgHiBlack, color.BgHiCyan, color.Bold).SprintFunc()
 )
 
 type parser struct {
@@ -45,6 +47,7 @@ func New(file, text, filter string, lines, page int, regex, noColor bool) *parse
 	return &parser{
 		file:    file,
 		text:    text,
+		filter:  filter,
 		lines:   lines,
 		page:    page,
 		regex:   regex,
@@ -75,6 +78,11 @@ func (p *parser) Parse() {
 	}
 
 	numPages := len(pageOffsets)
+
+	if numPages == 0 {
+		fmt.Println(info("Sorry. Nothing to show here!"))
+		return
+	}
 
 	output := p.getFilePage(pageOffsets[currentPage-1])
 
@@ -130,12 +138,17 @@ func (p *parser) getFilePage(offset int64) string {
 	s := bufio.NewScanner(f)
 
 	var current int
-
 	var output bytes.Buffer
+	var text string
 
 	for s.Scan() {
 		current++
-		fmt.Fprintf(&output, "%s\n", s.Text())
+		if p.filter != "" {
+			text = strings.Replace(s.Text(), p.filter, success(p.filter), -1)
+		} else {
+			text = s.Text()
+		}
+		fmt.Fprintf(&output, "%s\n", text)
 		if current >= p.lines {
 			break
 		}
@@ -165,30 +178,48 @@ func (p *parser) countLines() ([]int64, error) {
 	r := bufio.NewReader(f)
 
 	var pageOffsets []int64
+	var filterOffsets []int64
 	var currentLine int
 	var lastOffset int64
 	var offset int64
+	var search []byte
+	var pageHit bool
 
-	if p.filter == "" {
-		pageOffsets = append(pageOffsets, offset)
+	pageOffsets = append(pageOffsets, offset)
+
+	if p.filter != "" {
+		search = []byte(p.filter)
 	}
 
 	for {
 		currentLine++
 		bs, err := r.ReadBytes('\n')
+		if search != nil && bytes.Contains(bs, search) {
+			pageHit = true
+		}
 		offset += int64(len(bs))
 		if currentLine == p.lines {
 			lastOffset = pageOffsets[len(pageOffsets)-1]
+			if pageHit {
+				filterOffsets = append(filterOffsets, pageOffsets[len(pageOffsets)-1])
+			}
 			offset += lastOffset
 			if offset < lastPosition {
 				pageOffsets = append(pageOffsets, offset)
 			}
 			currentLine = 0
 			offset = 0
+			pageHit = false
 		}
 
 		switch {
 		case err == io.EOF:
+			if currentLine < p.lines && pageHit {
+				filterOffsets = append(filterOffsets, pageOffsets[len(pageOffsets)-1])
+			}
+			if search != nil {
+				return filterOffsets, nil
+			}
 			return pageOffsets, nil
 
 		case err != nil:
