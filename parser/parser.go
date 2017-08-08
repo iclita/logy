@@ -120,7 +120,7 @@ func (p *parser) getFilePage(offset int64) string {
 	}
 	defer f.Close()
 
-	_, err = f.Seek(int64(offset), io.SeekStart)
+	_, err = f.Seek(offset, io.SeekStart)
 	if err != nil {
 		log.Fatal(err)
 	}
