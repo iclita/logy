@@ -80,6 +80,10 @@ func (p *parser) Parse() {
 
 	fmt.Println(output)
 
+	if numPages <= 1 {
+		return
+	}
+
 	fmt.Print(alert(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
 
 	in := bufio.NewScanner(os.Stdin)
