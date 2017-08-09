@@ -230,7 +230,7 @@ func (p *parser) lineHit(line []byte) bool {
 			exitWithError(err.Error())
 		}
 
-		found := reg.FindAll(line, -1)
+		found := reg.Find(line)
 		return found != nil
 	}
 
