@@ -261,6 +261,7 @@ func (p *parser) showText(text string) string {
 		for _, m := range matches {
 			text = strings.Replace(text, m, success(m), -1)
 		}
+		return text
 	}
 
 	return strings.Replace(text, p.filter, success(p.filter), -1)
