@@ -42,7 +42,7 @@ func showHelp() {
 		[]string{"-lines", "Number of lines per page. Defaults to 100", "logy -file=path/to/file.log -lines=250", "NO"},
 		[]string{"-page", "Current page number. Defaults to 1", "logy -file=path/to/file.log -page=10", "NO"},
 		[]string{"--with-regex", "Enable regex support. Defaults to false", "logy -file=path/to/file.log -filter=[0-9]+search --with-regex", "NO"},
-		[]string{"--no-color", "Disable color output. Defaults to false", "logy -filter=search --no-color", "NO"},
+		[]string{"--no-color", "Disable color output. Defaults to false", "logy -file=path/to/file.log --no-color", "NO"},
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
