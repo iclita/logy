@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
+	"regexp"
 
 	"bitbucket.org/iulianclita/logy/parser"
 	"github.com/olekukonko/tablewriter"
@@ -34,13 +36,13 @@ func showHelp() {
 	fmt.Println("Below is a table explaining the usage of this little utility.")
 
 	data := [][]string{
-		[]string{"file", "Log file path", "logy -file=path/to/file.log", "YES"},
-		[]string{"text", "Text type to parse. Defaults to plain. Valid options are: plain, json, html, xml", "logy -file=path/to/file.log -text=json", "NO"},
-		[]string{"filter", "Text to filter by", "logy -file=path/to/file.log -filter=search", "NO"},
-		[]string{"lines", "Number of lines per page. Defaults to 100", "logy -file=path/to/file.log -lines=250", "NO"},
-		[]string{"page", "Current page number. Defaults to 1", "logy -file=path/to/file.log -page=10", "NO"},
-		[]string{"regex", "Enable regex support. Defaults to false", "logy -file=path/to/file.log -filter=^[0-9]+search$ -regex", "NO"},
-		[]string{"no-color", "Disable color output. Defaults to false", "logy -filter=search --no-color", "NO"},
+		[]string{"-file", "Log file path", "logy -file=path/to/file.log", "YES"},
+		[]string{"-text", "Text type to parse. Defaults to plain. Valid options are: plain, json, html, xml", "logy -file=path/to/file.log -text=json", "NO"},
+		[]string{"-filter", "Text to filter by", "logy -file=path/to/file.log -filter=search", "NO"},
+		[]string{"-lines", "Number of lines per page. Defaults to 100", "logy -file=path/to/file.log -lines=250", "NO"},
+		[]string{"-page", "Current page number. Defaults to 1", "logy -file=path/to/file.log -page=10", "NO"},
+		[]string{"--with-regex", "Enable regex support. Defaults to false", "logy -file=path/to/file.log -filter=[0-9]+search --with-regex", "NO"},
+		[]string{"--no-color", "Disable color output. Defaults to false", "logy -filter=search --no-color", "NO"},
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
@@ -64,7 +66,7 @@ func main() {
 	filter := flag.String("filter", "", "Text to filter by")
 	lines := flag.Int("lines", 100, "Number of lines per page. Defaults to 100")
 	page := flag.Int("page", 1, "Current page number. Defaults to 1")
-	regex := flag.Bool("regex", false, "Enable regex support. Defaults to false")
+	withRegex := flag.Bool("with-regex", false, "Enable regex support. Defaults to false")
 	noColor := flag.Bool("no-color", false, "Disable color output. Defaults to false")
 
 	flag.Parse()
@@ -76,7 +78,20 @@ func main() {
 		return
 	}
 
-	p := parser.New(*file, *text, *filter, *lines, *page, *regex, *noColor)
+	var regex *regexp.Regexp
+
+	if *withRegex {
+		if *filter == "" {
+			log.Fatal("Error! Filter option is missing!")
+		}
+		re, err := regexp.Compile(*filter)
+		if err != nil {
+			log.Fatal(err)
+		}
+		regex = re
+	}
+
+	p := parser.New(*file, *text, *filter, *lines, *page, *noColor, regex)
 
 	p.Parse()
 

@@ -39,20 +39,20 @@ type parser struct {
 	filter  string
 	lines   int
 	page    int
-	regex   bool
 	noColor bool
+	regex   *regexp.Regexp
 }
 
 // New returns a new parser
-func New(file, text, filter string, lines, page int, regex, noColor bool) *parser {
+func New(file, text, filter string, lines, page int, noColor bool, regex *regexp.Regexp) *parser {
 	return &parser{
 		file:    file,
 		text:    text,
 		filter:  filter,
 		lines:   lines,
 		page:    page,
-		regex:   regex,
 		noColor: noColor,
+		regex:   regex,
 	}
 }
 
@@ -144,7 +144,7 @@ func (p *parser) getFilePage(offset int64) string {
 
 	for s.Scan() {
 		current++
-		text = p.showText(s.Text())
+		text = p.getOutput(s.Text())
 		fmt.Fprintf(&output, "%s\n", text)
 		if current >= p.lines {
 			break
@@ -224,20 +224,15 @@ func (p *parser) lineHit(line []byte) bool {
 	if p.filter == "" {
 		return false
 	}
-	if p.regex {
-		reg, err := regexp.Compile(p.filter)
-		if err != nil {
-			exitWithError(err.Error())
-		}
-
-		found := reg.Find(line)
+	if p.regex != nil {
+		found := p.regex.Find(line)
 		return found != nil
 	}
 
 	return bytes.Contains(line, []byte(p.filter))
 }
 
-func (p *parser) showText(text string) string {
+func (p *parser) getOutput(text string) string {
 	if p.filter == "" {
 		return text
 	}
@@ -245,16 +240,11 @@ func (p *parser) showText(text string) string {
 	// If regex remains enabled strange out is given
 	// Also there is no sense in having a regex with length of 1
 	if len(p.filter) == 1 {
-		p.regex = false
+		p.regex = nil
 	}
 
-	if p.regex {
-		reg, err := regexp.Compile(p.filter)
-		if err != nil {
-			exitWithError(err.Error())
-		}
-
-		matches := reg.FindAllString(text, -1)
+	if p.regex != nil {
+		matches := p.regex.FindAllString(text, -1)
 		if matches == nil {
 			return text
 		}
