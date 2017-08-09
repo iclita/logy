@@ -88,7 +88,7 @@ func (p *parser) Parse() {
 
 	fmt.Println(output)
 
-	if numPages <= 1 {
+	if numPages == 1 {
 		return
 	}
 
