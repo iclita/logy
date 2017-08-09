@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -143,11 +144,7 @@ func (p *parser) getFilePage(offset int64) string {
 
 	for s.Scan() {
 		current++
-		if p.filter != "" {
-			text = strings.Replace(s.Text(), p.filter, success(p.filter), -1)
-		} else {
-			text = s.Text()
-		}
+		text = p.showText(s.Text())
 		fmt.Fprintf(&output, "%s\n", text)
 		if current >= p.lines {
 			break
@@ -182,22 +179,17 @@ func (p *parser) countLines() ([]int64, error) {
 	var currentLine int
 	var lastOffset int64
 	var offset int64
-	var search []byte
 	var pageHit bool
 
 	pageOffsets = append(pageOffsets, offset)
 
-	if p.filter != "" {
-		search = []byte(p.filter)
-	}
-
 	for {
 		currentLine++
-		bs, err := r.ReadBytes('\n')
-		if search != nil && bytes.Contains(bs, search) {
+		line, err := r.ReadBytes('\n')
+		if p.lineHit(line) {
 			pageHit = true
 		}
-		offset += int64(len(bs))
+		offset += int64(len(line))
 		if currentLine == p.lines {
 			lastOffset = pageOffsets[len(pageOffsets)-1]
 			if pageHit {
@@ -217,7 +209,7 @@ func (p *parser) countLines() ([]int64, error) {
 			if currentLine < p.lines && pageHit {
 				filterOffsets = append(filterOffsets, pageOffsets[len(pageOffsets)-1])
 			}
-			if search != nil {
+			if p.filter != "" {
 				return filterOffsets, nil
 			}
 			return pageOffsets, nil
@@ -226,6 +218,52 @@ func (p *parser) countLines() ([]int64, error) {
 			return nil, err
 		}
 	}
+}
+
+func (p *parser) lineHit(line []byte) bool {
+	if p.filter == "" {
+		return false
+	}
+	if p.regex {
+		reg, err := regexp.Compile(p.filter)
+		if err != nil {
+			exitWithError(err.Error())
+		}
+
+		found := reg.FindAll(line, -1)
+		return found != nil
+	}
+
+	return bytes.Contains(line, []byte(p.filter))
+}
+
+func (p *parser) showText(text string) string {
+	if p.filter == "" {
+		return text
+	}
+	// Disable regex support for characters of length 1
+	// If regex remains enabled strange out is given
+	// Also there is no sense in having a regex with length of 1
+	if len(p.filter) == 1 {
+		p.regex = false
+	}
+
+	if p.regex {
+		reg, err := regexp.Compile(p.filter)
+		if err != nil {
+			exitWithError(err.Error())
+		}
+
+		matches := reg.FindAllString(text, -1)
+		if matches == nil {
+			return text
+		}
+		for _, m := range matches {
+			text = strings.Replace(text, m, success(m), -1)
+		}
+	}
+
+	return strings.Replace(text, p.filter, success(p.filter), -1)
 }
 
 func stringInSlice(s string, list []string) bool {
@@ -238,6 +276,6 @@ func stringInSlice(s string, list []string) bool {
 }
 
 func exitWithError(s string) {
-	io.WriteString(os.Stderr, s)
+	io.WriteString(os.Stderr, fail(s)+"\n")
 	os.Exit(1)
 }
