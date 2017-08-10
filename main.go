@@ -8,6 +8,7 @@ import (
 	"regexp"
 
 	"bitbucket.org/iulianclita/logy/parser"
+	"github.com/fatih/color"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -23,7 +24,7 @@ import (
 // 	}
 // 	defer f.Close()
 
-// 	for i := 0; i < 100000; i++ {
+// 	for i := 0; i < 10000; i++ {
 // 		_, err := f.Write(b)
 // 		if err != nil {
 // 			log.Fatal(err)
@@ -31,9 +32,11 @@ import (
 // 	}
 // }
 
+// show displays help information about this tool
 func showHelp() {
-	fmt.Println("Welcome to logy. The best parser for filtering and handling log files of any size with ease.")
-	fmt.Println("Below is a table explaining the usage of this little utility.")
+	c := color.New(color.FgHiCyan, color.Bold)
+	c.Println("Welcome to logy. The best parser for filtering and handling log files of any size with ease.")
+	c.Println("Below is a table explaining the usage of this little utility.")
 
 	data := [][]string{
 		[]string{"-file", "Log file path", "logy -file=path/to/file.log", "YES"},
@@ -61,6 +64,7 @@ func showHelp() {
 }
 
 func main() {
+	// Capture and parse incoming commnad line flags
 	file := flag.String("file", "", "File path")
 	text := flag.String("text", "plain", "Text type to parse. Defaults to plain")
 	filter := flag.String("filter", "", "Text to filter by")
@@ -72,27 +76,30 @@ func main() {
 	flag.Parse()
 
 	fmt.Println()
-
+	// If no command line flags are provided show help information
 	if len(os.Args) == 1 {
 		showHelp()
 		return
 	}
-
+	// Enabe regex support is user asks for it
 	var regex *regexp.Regexp
 
 	if *withRegex {
+		// If no filter is provided then regex is useless
+		// In this case notify the user
 		if *filter == "" {
 			log.Fatal("Error! Filter option is missing!")
 		}
+		// Compile regex expression here to be user later in the parser
 		re, err := regexp.Compile(*filter)
 		if err != nil {
 			log.Fatal(err)
 		}
 		regex = re
 	}
-
+	// Create a new parser object
 	p := parser.New(*file, *text, *filter, *lines, *page, *noColor, regex)
-
+	// Start parsing the given file
 	p.Parse()
 
 }
