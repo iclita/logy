@@ -32,12 +32,13 @@ import (
 // 	}
 // }
 
-// show displays help information about this tool
+// Displays help information about this tool
 func showHelp() {
+	// Show nicely colored info
 	c := color.New(color.FgHiCyan, color.Bold)
 	c.Println("Welcome to logy. The best parser for filtering and handling log files of any size with ease.")
 	c.Println("Below is a table explaining the usage of this little utility.")
-
+	// Define table content
 	data := [][]string{
 		[]string{"-file", "Log file path", "logy -file=path/to/file.log", "YES"},
 		[]string{"-text", "Text type to parse. Defaults to plain. Valid options are: plain, json, html, xml", "logy -file=path/to/file.log -text=json", "NO"},
@@ -47,19 +48,20 @@ func showHelp() {
 		[]string{"--with-regex", "Enable regex support. Defaults to false", "logy -file=path/to/file.log -filter=[0-9]+search --with-regex", "NO"},
 		[]string{"--no-color", "Disable color output. Defaults to false", "logy -file=path/to/file.log --no-color", "NO"},
 	}
-
+	// Set table options
 	table := tablewriter.NewWriter(os.Stdout)
 
 	table.SetRowLine(true)
 	table.SetCenterSeparator("+")
 	table.SetColumnSeparator("|")
 	table.SetRowSeparator("-")
-
+	// Define table header
 	table.SetHeader([]string{"Option", "Description", "Usage", "Required"})
-
+	// Compute the table
 	for _, v := range data {
 		table.Append(v)
 	}
+	// Render the table
 	table.Render()
 }
 
