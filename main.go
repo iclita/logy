@@ -41,7 +41,7 @@ func showHelp() {
 	// Define table content
 	data := [][]string{
 		[]string{"-file", "Log file path", "logy -file=path/to/file.log", "YES"},
-		[]string{"-text", "Text type to parse. Defaults to plain. Valid options are: plain, json, html, xml", "logy -file=path/to/file.log -text=json", "NO"},
+		[]string{"-text", "Text type to parse. Defaults to plain. Valid options are: plain, json", "logy -file=path/to/file.log -text=json", "NO"},
 		[]string{"-filter", "Text to filter by", "logy -file=path/to/file.log -filter=search", "NO"},
 		[]string{"-lines", "Number of lines per page. Defaults to 50", "logy -file=path/to/file.log -lines=250", "NO"},
 		[]string{"-page", "Current page number. Defaults to 1", "logy -file=path/to/file.log -page=10", "NO"},
