@@ -19,12 +19,6 @@ func stringInSlice(s string, list []string) bool {
 	return false
 }
 
-// Exit with a nicely colored error message
-func exitWithError(s string) {
-	io.WriteString(os.Stderr, fail(s)+"\n")
-	os.Exit(1)
-}
-
 // Formats input as pretty JSON
 func formatJSON(text []byte) string {
 	var prettyJSON bytes.Buffer
@@ -33,4 +27,10 @@ func formatJSON(text []byte) string {
 		log.Fatal("JSON parse error: ", err)
 	}
 	return fmt.Sprintf("\n%s", prettyJSON.String())
+}
+
+// Exit with a nicely colored error message
+func exitWithError(s string) {
+	io.WriteString(os.Stderr, fail(s)+"\n")
+	os.Exit(1)
 }
