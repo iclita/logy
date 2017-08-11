@@ -1,2 +1,3 @@
 logy
 *.log
+.DS_Store

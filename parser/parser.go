@@ -25,8 +25,6 @@ var (
 	textTypes = []string{
 		"plain",
 		"json",
-		"html",
-		"xml",
 	}
 
 	// Color functions to help display meaningful input
@@ -169,6 +167,8 @@ func (p *parser) getFilePage(offset int64) string {
 	}
 	// Start a new scanner
 	s := bufio.NewScanner(f)
+	// Set a larger token size just in case
+	s.Buffer(nil, 64*1024*1024)
 	// Current line. We need to keep track
 	// of all current line number to determine
 	// when a page ends
@@ -310,6 +310,16 @@ func (p *parser) lineHit(line []byte) bool {
 
 // This computes the final output
 func (p *parser) getOutput(text string) string {
+	// Format input as JSON if needed
+	if p.text == "json" {
+		re := regexp.MustCompile(`{".*:.*}`)
+		jsonMatches := re.FindAll([]byte(text), -1)
+		if jsonMatches != nil {
+			for _, m := range jsonMatches {
+				text = strings.Replace(text, string(m), formatJSON(m), -1)
+			}
+		}
+	}
 	// If no filter was provided give the text as it is
 	if p.filter == "" {
 		return text

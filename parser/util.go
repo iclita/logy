@@ -1,7 +1,11 @@
 package parser
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"io"
+	"log"
 	"os"
 )
 
@@ -19,4 +23,14 @@ func stringInSlice(s string, list []string) bool {
 func exitWithError(s string) {
 	io.WriteString(os.Stderr, fail(s)+"\n")
 	os.Exit(1)
+}
+
+// Formats input as pretty JSON
+func formatJSON(text []byte) string {
+	var prettyJSON bytes.Buffer
+	err := json.Indent(&prettyJSON, text, "", "\t")
+	if err != nil {
+		log.Fatal("JSON parse error: ", err)
+	}
+	return fmt.Sprintf("\n%s", prettyJSON.String())
 }
