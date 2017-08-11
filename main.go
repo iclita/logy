@@ -43,7 +43,7 @@ func showHelp() {
 		[]string{"-file", "Log file path", "logy -file=path/to/file.log", "YES"},
 		[]string{"-text", "Text type to parse. Defaults to plain. Valid options are: plain, json, html, xml", "logy -file=path/to/file.log -text=json", "NO"},
 		[]string{"-filter", "Text to filter by", "logy -file=path/to/file.log -filter=search", "NO"},
-		[]string{"-lines", "Number of lines per page. Defaults to 100", "logy -file=path/to/file.log -lines=250", "NO"},
+		[]string{"-lines", "Number of lines per page. Defaults to 50", "logy -file=path/to/file.log -lines=250", "NO"},
 		[]string{"-page", "Current page number. Defaults to 1", "logy -file=path/to/file.log -page=10", "NO"},
 		[]string{"--with-regex", "Enable regex support. Defaults to false", "logy -file=path/to/file.log -filter=[0-9]+search --with-regex", "NO"},
 		[]string{"--no-color", "Disable color output. Defaults to false", "logy -file=path/to/file.log --no-color", "NO"},
@@ -70,7 +70,7 @@ func main() {
 	file := flag.String("file", "", "File path")
 	text := flag.String("text", "plain", "Text type to parse. Defaults to plain")
 	filter := flag.String("filter", "", "Text to filter by")
-	lines := flag.Int("lines", 100, "Number of lines per page. Defaults to 100")
+	lines := flag.Int("lines", 50, "Number of lines per page. Defaults to 50")
 	page := flag.Int("page", 1, "Current page number. Defaults to 1")
 	withRegex := flag.Bool("with-regex", false, "Enable regex support. Defaults to false")
 	noColor := flag.Bool("no-color", false, "Disable color output. Defaults to false")

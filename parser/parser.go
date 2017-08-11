@@ -62,6 +62,18 @@ func New(file, text, filter string, lines, page int, noColor bool, regex *regexp
 
 // Parse parses the file and shows the output to the user
 func (p *parser) Parse() {
+	// Check if a valid lines value was provided
+	if p.lines <= 0 {
+		exitWithError(fail("Error! Option flag -lines must be strictly positive"))
+	}
+	// Check if a valid page value was provided
+	if p.page <= 0 {
+		exitWithError(fail("Error! Option flag -page must be strictly positive"))
+	}
+	// Check if a valid test type was provided
+	if !stringInSlice(p.text, textTypes) {
+		exitWithError(fail(fmt.Sprintf("Error! Accepted text types are: %s", strings.Join(textTypes, ", "))))
+	}
 	// Disables colorized output
 	if p.noColor {
 		color.NoColor = true
@@ -71,10 +83,6 @@ func (p *parser) Parse() {
 	// Also there is no sense in having a regex with length of 1
 	if len(p.filter) == 1 {
 		p.regex = nil
-	}
-	// Check if a valid test type was provided
-	if !stringInSlice(p.text, textTypes) {
-		exitWithError(fail(fmt.Sprintf("Error! Accepted text types are: %s", strings.Join(textTypes, ", "))))
 	}
 	// Check if a file path was provided
 	if p.file == "" {
