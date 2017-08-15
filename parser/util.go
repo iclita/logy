@@ -31,6 +31,6 @@ func formatJSON(text []byte) string {
 
 // Exit with a nicely colored error message
 func exitWithError(s string) {
-	io.WriteString(os.Stderr, fail(s)+"\n")
+	io.WriteString(os.Stderr, fmt.Sprintln(fail(s)))
 	os.Exit(1)
 }
