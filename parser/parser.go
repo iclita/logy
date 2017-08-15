@@ -28,7 +28,7 @@ var (
 	}
 
 	// Color functions to help display meaningful input
-	success = color.New(color.FgHiBlack, color.BgHiGreen, color.Bold).SprintFunc()
+	success = color.New(color.FgHiGreen, color.Bold).SprintFunc()
 	fail    = color.New(color.FgHiWhite, color.BgRed, color.Bold).SprintFunc()
 	alert   = color.New(color.FgHiYellow, color.Bold).SprintFunc()
 	info    = color.New(color.FgHiMagenta, color.Bold).SprintFunc()
