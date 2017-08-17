@@ -100,7 +100,7 @@ func (p *parser) Parse() {
 	numPages := len(pageOffsets)
 	// If nothing can be shown tell the user
 	if numPages == 0 {
-		fmt.Println(info("Sorry. Nothing to show here!"))
+		fmt.Printf("%s\n", info("Sorry. Nothing to show here!"))
 		return
 	}
 	// The current page cannot be greater than the total number of pages
@@ -130,13 +130,14 @@ func (p *parser) Parse() {
 			fmt.Printf("\n%s\n\n", fail("Error! A valid number is required"))
 			fmt.Print(alert(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
 		} else {
-			if inputPage > numPages {
+			switch {
+			case inputPage > numPages:
 				fmt.Printf("\n%s\n\n", fail(fmt.Sprintf("Error! Page number cannot be greater than %d", numPages)))
 				fmt.Print(alert(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
-			} else if inputPage < 1 {
+			case inputPage < 1:
 				fmt.Printf("\n%s\n\n", fail("Error! Page number cannot be smaller than 1"))
 				fmt.Print(alert(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
-			} else {
+			default:
 				currentPage = inputPage
 				output := p.getFilePage(pageOffsets[currentPage-1])
 				fmt.Printf("\n%s\n", output)

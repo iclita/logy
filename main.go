@@ -63,7 +63,7 @@ func main() {
 		showHelp()
 		return
 	}
-	// Enabe regex support is user asks for it
+	// Enable regex support is user asks for it
 	var regex *regexp.Regexp
 
 	if *withRegex {
