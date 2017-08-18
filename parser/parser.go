@@ -46,7 +46,24 @@ type parser struct {
 }
 
 // New returns a new parser object
-func New(file, text, filter string, lines, page int, noColor bool, regex *regexp.Regexp) *parser {
+func New(file, text, filter string, lines, page int, noColor, withRegex bool) *parser {
+	// Enable regex support is user asks for it
+	var regex *regexp.Regexp
+	// Attach regexp to parser
+	if withRegex {
+		// If no filter is provided then regex is useless
+		// In this case notify the user
+		if filter == "" {
+			exitWithError(fail("Error! Regex is present but no filter value was provided!"))
+		}
+		// Compile regex expression here to be user later in the parser
+		re, err := regexp.Compile(filter)
+		if err != nil {
+			exitWithError(fail(fmt.Sprintf("Error! %s", err.Error())))
+		}
+		regex = re
+	}
+
 	return &parser{
 		file:    file,
 		text:    text,

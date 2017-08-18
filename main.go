@@ -3,9 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
-	"regexp"
 
 	"bitbucket.org/iulianclita/logy/parser"
 	"github.com/fatih/color"
@@ -63,25 +61,8 @@ func main() {
 		showHelp()
 		return
 	}
-	// Enable regex support is user asks for it
-	var regex *regexp.Regexp
-
-	if *withRegex {
-		// If no filter is provided then regex is useless
-		// In this case notify the user
-		if *filter == "" {
-			log.Fatal("Error! Filter option is missing!")
-		}
-		// Compile regex expression here to be user later in the parser
-		re, err := regexp.Compile(*filter)
-		if err != nil {
-			log.Fatal(err)
-		}
-		regex = re
-	}
 	// Create a new parser object
-	p := parser.New(*file, *text, *filter, *lines, *page, *noColor, regex)
+	p := parser.New(*file, *text, *filter, *lines, *page, *noColor, *withRegex)
 	// Start parsing the given file
 	p.Parse()
-
 }
