@@ -18,15 +18,18 @@ import (
 	"github.com/fatih/color"
 )
 
-var (
-	// Current accepted text types
-	// This information is useful to let the parser know
-	// how to interpret the ginve file input
-	textTypes = []string{
-		"plain",
-		"json",
-	}
+// Initial json Regexp
+var jsonReg *regexp.Regexp
 
+// Current accepted text types
+// This information is useful to let the parser know
+// how to interpret the ginve file input
+var textTypes = []string{
+	"plain",
+	"json",
+}
+
+var (
 	// Color functions to help display meaningful input
 	success = color.New(color.FgHiGreen, color.Bold).SprintFunc()
 	fail    = color.New(color.FgHiWhite, color.BgRed, color.Bold).SprintFunc()
@@ -43,6 +46,11 @@ type parser struct {
 	page    int
 	noColor bool
 	regex   *regexp.Regexp
+}
+
+// Initialize json regexp on package initialization
+func init() {
+	jsonReg = regexp.MustCompile(`{".*:.*}`)
 }
 
 // New returns a new parser object
@@ -330,8 +338,7 @@ func (p *parser) lineHit(line []byte) bool {
 func (p *parser) getOutput(text string) string {
 	// Format input as JSON if needed
 	if p.text == "json" {
-		re := regexp.MustCompile(`{".*:.*}`)
-		jsonMatches := re.FindAll([]byte(text), -1)
+		jsonMatches := jsonReg.FindAll([]byte(text), -1)
 		if jsonMatches != nil {
 			for _, m := range jsonMatches {
 				text = strings.Replace(text, string(m), formatJSON(m), -1)
