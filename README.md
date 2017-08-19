@@ -18,6 +18,8 @@ To setup $GOPATH follow [this link](https://golang.org/doc/code.html#Overview)
 $ cd $GOPATH/src/github.com/iulianclita
 $ git clone git@github.com:iulianclita/logy.git
 $ cd logy/
+$ go get -u github.com/fatih/color
+$ go get -u github.com/olekukonko/tablewriter
 $ go install
 $ logy # Make sure $GOPATH/bin was added to your global $PATH variable
 ```

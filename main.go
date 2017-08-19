@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"bitbucket.org/iulianclita/logy/parser"
 	"github.com/fatih/color"
+	"github.com/iulianclita/logy/parser"
 	"github.com/olekukonko/tablewriter"
 )
 
