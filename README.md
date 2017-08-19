@@ -6,16 +6,20 @@ The best parser for filtering and handling files of any size with ease. Inspecti
 
 - Written in pure Go (Golang)
 - Requires Go > 1.7 to build. Just visit [this link](https://golang.org/doc/install) on how to install Go on your machine
-- Deadly simple installation process
+- Simple installation process
 - Very easy to use and highly intuitive
 - Works on Mac, Linux and Windows
 
 ## Installation
 
+To setup $GOPATH follow [this link](https://golang.org/doc/code.html#Overview)
+
 ```bash
+$ cd $GOPATH/src/github.com/iulianclita
 $ git clone git@github.com:iulianclita/logy.git
 $ cd logy/
 $ go install
+$ logy # Make sure $GOPATH/bin was added to your global $PATH variable
 ```
 
 ## Usage
@@ -58,3 +62,9 @@ $ logy -file=path/to/file.log --no-color # The parser will display all text with
 ``` 
 
 Of course all the flag options can becombined in any manner to obtain the desired results
+
+## Contributing
+
+#### Bug Reports & Feature Requests
+
+Please use the [issue tracker](https://github.com/iulianclita/logy/issues) to report any bugs or feature requests.
