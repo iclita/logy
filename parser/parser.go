@@ -67,7 +67,7 @@ func New(file, text, filter string, lines, page int, noColor, withRegex bool) *p
 		// Compile regex expression here to be user later in the parser
 		re, err := regexp.Compile(filter)
 		if err != nil {
-			exitWithError(fail(fmt.Sprintf("Error! %s", err.Error())))
+			exitWithError(fail(fmt.Sprintf("Regex parse error: %s", err.Error())))
 		}
 		regex = re
 	}
