@@ -63,7 +63,7 @@ $ logy -file=path/to/file.log -filter=[0-9]{2}:[0-9]{2}:[0-9]{2} --with-regex # 
 $ logy -file=path/to/file.log --no-color # The parser will display all text with the same color (black/white). Probably you will never want this behavior but it's here just in case :)
 ``` 
 
-Of course all the flag options can becombined in any manner to obtain the desired results
+Of course all the flag options can be combined in any manner to obtain the desired results
 
 ## Contributing
 
