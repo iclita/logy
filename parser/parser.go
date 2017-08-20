@@ -186,7 +186,7 @@ func (p *parser) getFilePage(offset int64) string {
 	defer f.Close()
 	// Navigate to the given offset
 	// This way we skip the part we don't need
-	// and avoid parsing unnecesary lines
+	// and avoid parsing unnecessary lines
 	_, err = f.Seek(offset, io.SeekStart)
 	if err != nil {
 		log.Fatal(err)

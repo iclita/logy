@@ -70,3 +70,7 @@ Of course all the flag options can becombined in any manner to obtain the desire
 #### Bug Reports & Feature Requests
 
 Please use the [issue tracker](https://github.com/iulianclita/logy/issues) to report any bugs or feature requests.
+
+## License
+
+The Logy CLI tool is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
