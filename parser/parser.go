@@ -46,7 +46,7 @@ type parser struct {
 
 // Initialize json regexp on package initialization
 func init() {
-	jsonReg = regexp.MustCompile(`{".*:.*}`)
+	jsonReg = regexp.MustCompile(`\[?{".*:.*}\]?`)
 }
 
 // New returns a new parser object

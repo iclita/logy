@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 )
 
 // Checks if a slice of strings contains a given string
@@ -22,7 +23,7 @@ func stringInSlice(s string, list []string) bool {
 // Formats input as pretty JSON
 func formatJSON(text []byte) string {
 	var prettyJSON bytes.Buffer
-	err := json.Indent(&prettyJSON, text, "", "\t")
+	err := json.Indent(&prettyJSON, text, "", strings.Repeat(" ", 2))
 	if err != nil {
 		log.Fatal("JSON parse error: ", err)
 	}
