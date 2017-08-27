@@ -1,4 +1,4 @@
-## Logy
+# Logy
 
 The best parser for filtering and handling files of any size with ease. Inspecting or filtering large files can be a real pain. Logy let's you open any file in a paginated manner so that there is no overhead of opening the whole file when all you want is searching for a small chunk of text.
 
@@ -68,6 +68,9 @@ $ logy -file=path/to/file.log --no-color # The parser will display all text with
 ``` 
 
 Of course all the flag options can be combined in any manner to obtain the desired results
+
+## Note
+Because regex implementation in Go is not highly performant, use the --with-regex flag when it is absolutely necessary, especially with large files.
 
 ## Contributing
 
