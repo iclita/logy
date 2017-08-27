@@ -70,7 +70,7 @@ $ logy -file=path/to/file.log --no-color # The parser will display all text with
 Of course all the flag options can be combined in any manner to obtain the desired results
 
 ## Note
-Because regex implementation in Go is not highly performant, use the --with-regex flag when it is absolutely necessary, especially with large files.
+Because regex implementation in Go is not highly performant, use the `--with-regex` flag when it is absolutely necessary, especially with large files.
 
 ## Contributing
 
