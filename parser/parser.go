@@ -19,7 +19,7 @@ var jsonReg *regexp.Regexp
 
 // Current accepted text types
 // This information is useful to let the parser know
-// how to interpret the ginve file input
+// how to interpret the given file input
 var textTypes = []string{
 	"plain",
 	"json",
