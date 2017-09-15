@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/user"
 	"regexp"
 	"strconv"
 	"strings"
@@ -51,6 +52,13 @@ func init() {
 
 // New returns a new parser object
 func New(file, text, filter string, lines, page int, noColor, withRegex bool) *parser {
+	if strings.HasPrefix(file, "~") {
+		user, err := user.Current()
+		if err != nil {
+			log.Fatal(err)
+		}
+		file = strings.Replace(file, "~", user.HomeDir, 1)
+	}
 	// Enable regex support is user asks for it
 	var regex *regexp.Regexp
 	// Attach regexp to parser
