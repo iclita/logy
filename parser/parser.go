@@ -53,7 +53,7 @@ func init() {
 // New returns a new parser object
 func New(file, text, filter string, lines, page int, noColor, withRegex bool) *parser {
 	// If the file path starts with "~"
-	// it means the user is on a Unix based OS
+	// it means the user is probably on a Unix based OS
 	// and "~" represents the home directory path
 	if strings.HasPrefix(file, "~") {
 		user, err := user.Current()
