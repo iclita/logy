@@ -35,14 +35,13 @@ var (
 )
 
 // Parser type definition
-type parser struct {
-	file    string
-	text    string
-	filter  string
-	lines   int
-	page    int
-	noColor bool
-	regex   *regexp.Regexp
+type Parser struct {
+	path   string
+	text   string
+	filter string
+	lines  int
+	page   int
+	regex  *regexp.Regexp
 }
 
 // Initialize json regexp on package initialization
@@ -51,16 +50,36 @@ func init() {
 }
 
 // New returns a new parser object
-func New(file, text, filter string, lines, page int, noColor, withRegex bool) *parser {
-	// If the file path starts with "~"
+func New(path, text, filter string, lines, page int, noColor, withRegex bool) *Parser {
+	// Check if a path was provided
+	if path == "" {
+		exitWithError(fail("Error! Path is required"))
+	}
+	// Check if a valid lines value was provided
+	if lines <= 0 {
+		exitWithError(fail("Error! Option flag -lines must be strictly positive"))
+	}
+	// Check if a valid page value was provided
+	if page <= 0 {
+		exitWithError(fail("Error! Option flag -page must be strictly positive"))
+	}
+	// Check if a valid test type was provided
+	if !stringInSlice(text, textTypes) {
+		exitWithError(fail(fmt.Sprintf("Error! Accepted text types are: %s", strings.Join(textTypes, ", "))))
+	}
+	// Disables colorized output
+	if noColor {
+		color.NoColor = true
+	}
+	// If the path starts with "~"
 	// it means the user is probably on a Unix based OS
 	// and "~" represents the home directory path
-	if strings.HasPrefix(file, "~") {
+	if strings.HasPrefix(path, "~") {
 		user, err := user.Current()
 		if err != nil {
 			log.Fatal(err)
 		}
-		file = strings.Replace(file, "~", user.HomeDir, 1)
+		path = strings.Replace(path, "~", user.HomeDir, 1)
 	}
 	// Enable regex support is user asks for it
 	var regex *regexp.Regexp
@@ -71,60 +90,37 @@ func New(file, text, filter string, lines, page int, noColor, withRegex bool) *p
 		if filter == "" {
 			exitWithError(fail("Error! Regex is present but no filter value was provided!"))
 		}
-		// Compile regex expression here to be user later in the parser
-		re, err := regexp.Compile(filter)
-		if err != nil {
-			exitWithError(fail(fmt.Sprintf("Regex parse error: %s", err.Error())))
+		// Enable regex support for filter of length greater than 1
+		// If regex remains enabled when filter lenght is 1, strange output is given
+		// Also there is no sense in having a regex with length of 1
+		if len(filter) > 1 {
+			// Compile regex expression here to be user later in the parser
+			re, err := regexp.Compile(filter)
+			if err != nil {
+				exitWithError(fail(fmt.Sprintf("Regex parse error: %s", err.Error())))
+			}
+			regex = re
 		}
-		regex = re
 	}
 
-	return &parser{
-		file:    file,
-		text:    text,
-		filter:  filter,
-		lines:   lines,
-		page:    page,
-		noColor: noColor,
-		regex:   regex,
+	return &Parser{
+		path:   path,
+		text:   text,
+		filter: filter,
+		lines:  lines,
+		page:   page,
+		regex:  regex,
 	}
 }
 
 // Parse parses the file and shows the output to the user
-func (p *parser) Parse() {
-	// Check if a valid lines value was provided
-	if p.lines <= 0 {
-		exitWithError(fail("Error! Option flag -lines must be strictly positive"))
-	}
-	// Check if a valid page value was provided
-	if p.page <= 0 {
-		exitWithError(fail("Error! Option flag -page must be strictly positive"))
-	}
-	// Check if a valid test type was provided
-	if !stringInSlice(p.text, textTypes) {
-		exitWithError(fail(fmt.Sprintf("Error! Accepted text types are: %s", strings.Join(textTypes, ", "))))
-	}
-	// Disables colorized output
-	if p.noColor {
-		color.NoColor = true
-	}
-	// Disables regex support for characters of length 1
-	// If regex remains enabled strange out is given
-	// Also there is no sense in having a regex with length of 1
-	if len(p.filter) == 1 {
-		p.regex = nil
-	}
-	// Check if a file path was provided
-	if p.file == "" {
-		exitWithError(fail("Error! File is required"))
-	}
+func (p *Parser) Parse() {
 	// Set current page to what the parser gave us
 	currentPage := p.page
 	// Count all the lines and provide all page offsets
 	// These offsets help us navigate to any page instantly
 	// This is where all the "magic" happens
 	pageOffsets, err := p.countLines()
-
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -184,9 +180,9 @@ func (p *parser) Parse() {
 }
 
 // Gets the output for a new page on the input file
-func (p *parser) getFilePage(offset int64) string {
+func (p *Parser) getFilePage(offset int64) string {
 	// Open the file
-	f, err := os.Open(p.file)
+	f, err := os.Open(p.path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -200,7 +196,7 @@ func (p *parser) getFilePage(offset int64) string {
 	}
 	// Start a new scanner
 	s := bufio.NewScanner(f)
-	// Set a larger token size just in case
+	// Set a larger buffer just in case
 	s.Buffer(nil, 64*1024*1024)
 	// Current line. We need to keep track
 	// of all current line number to determine
@@ -234,9 +230,9 @@ func (p *parser) getFilePage(offset int64) string {
 // This is where all the "magic" happens
 // Here we count all the file lines
 // and extract a slice with all page offsets
-func (p *parser) countLines() ([]int64, error) {
+func (p *Parser) countLines() ([]int64, error) {
 	// Open the file
-	f, err := os.Open(p.file)
+	f, err := os.Open(p.path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -264,12 +260,12 @@ func (p *parser) countLines() ([]int64, error) {
 	// This is the current offset and is
 	// calculated line by line
 	var offset int64
-	// This is used to know if page has been hit
+	// This is used to know if page has been hit (matched)
 	// by a filter provided by the user
 	var pageHit bool
 	// We start by adding the first page offset which is 0
 	pageOffsets = append(pageOffsets, offset)
-
+	// Read all lines one by one
 	for {
 		currentLine++
 		// Read the input file line by line
@@ -326,7 +322,7 @@ func (p *parser) countLines() ([]int64, error) {
 }
 
 // This determines if line matches a given filter
-func (p *parser) lineHit(line []byte) bool {
+func (p *Parser) lineHit(line []byte) bool {
 	// If no filter was provided then we do not care about this
 	if p.filter == "" {
 		return false
@@ -342,13 +338,13 @@ func (p *parser) lineHit(line []byte) bool {
 }
 
 // This computes the final output
-func (p *parser) getOutput(text string) string {
+func (p *Parser) getOutput(text string) string {
 	// Format input as JSON if needed
 	if p.text == "json" {
-		jsonMatches := jsonReg.FindAll([]byte(text), -1)
+		jsonMatches := jsonReg.FindAllString(text, -1)
 		if jsonMatches != nil {
 			for _, m := range jsonMatches {
-				text = strings.Replace(text, string(m), formatJSON(m), -1)
+				text = strings.Replace(text, m, formatJSON(m), -1)
 			}
 		}
 	}

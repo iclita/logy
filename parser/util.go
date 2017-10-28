@@ -21,13 +21,13 @@ func stringInSlice(s string, list []string) bool {
 }
 
 // Formats input as pretty JSON
-func formatJSON(text []byte) string {
+func formatJSON(text string) string {
 	var prettyJSON bytes.Buffer
-	err := json.Indent(&prettyJSON, text, "", strings.Repeat(" ", 2))
+	err := json.Indent(&prettyJSON, []byte(text), "", strings.Repeat(" ", 2))
 	if err != nil {
 		log.Fatal("JSON parse error: ", err)
 	}
-	return fmt.Sprintf("\n%s", prettyJSON.String())
+	return prettyJSON.String()
 }
 
 // Exit with a nicely colored error message

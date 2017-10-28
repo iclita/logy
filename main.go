@@ -18,7 +18,7 @@ func showHelp() {
 	c.Println("Below is a table explaining the usage of this little utility.")
 	// Define table content
 	data := [][]string{
-		[]string{"-file", "Log file path", "logy -file=path/to/file.log", "YES"},
+		[]string{"-path", "File/directory path", "logy -file=path/to/file.log OR logy -file=path/to/directory", "YES"},
 		[]string{"-text", "Text type to parse. Defaults to plain. Valid options are: plain, json", "logy -file=path/to/file.log -text=json", "NO"},
 		[]string{"-filter", "Text to filter by", "logy -file=path/to/file.log -filter=search", "NO"},
 		[]string{"-lines", "Number of lines per page. Defaults to 50", "logy -file=path/to/file.log -lines=250", "NO"},
@@ -45,7 +45,7 @@ func showHelp() {
 
 func main() {
 	// Capture and parse incoming commnad line flags
-	file := flag.String("file", "", "File path")
+	path := flag.String("path", "", "File/directory path")
 	text := flag.String("text", "plain", "Text type to parse. Defaults to plain")
 	filter := flag.String("filter", "", "Text to filter by")
 	lines := flag.Int("lines", 50, "Number of lines per page. Defaults to 50")
@@ -62,7 +62,7 @@ func main() {
 		return
 	}
 	// Create a new parser object
-	p := parser.New(*file, *text, *filter, *lines, *page, *noColor, *withRegex)
+	p := parser.New(*path, *text, *filter, *lines, *page, *noColor, *withRegex)
 	// Start parsing the given file
 	p.Parse()
 }
