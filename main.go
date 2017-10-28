@@ -24,6 +24,7 @@ func showHelp() {
 		[]string{"-lines", "Number of lines per page. Defaults to 50", "logy -file=path/to/file.log -lines=250", "NO"},
 		[]string{"-page", "Current page number. Defaults to 1", "logy -file=path/to/file.log -page=10", "NO"},
 		[]string{"--with-regex", "Enable regex support. Defaults to false", "logy -file=path/to/file.log -filter=[0-9]+search --with-regex", "NO"},
+		[]string{"-ext", "Accepted file extensions to search in folder. Required only for directory paths", "logy -file=path/to/directory -ext=log,txt", "NO"},
 		[]string{"--no-color", "Disable color output. Defaults to false", "logy -file=path/to/file.log --no-color", "NO"},
 	}
 	// Set table options
@@ -51,6 +52,7 @@ func main() {
 	lines := flag.Int("lines", 50, "Number of lines per page. Defaults to 50")
 	page := flag.Int("page", 1, "Current page number. Defaults to 1")
 	withRegex := flag.Bool("with-regex", false, "Enable regex support. Defaults to false")
+	ext := flag.String("ext", "", "Accepted file extensions to search in folder")
 	noColor := flag.Bool("no-color", false, "Disable color output. Defaults to false")
 
 	flag.Parse()
@@ -62,7 +64,7 @@ func main() {
 		return
 	}
 	// Create a new parser object
-	p := parser.New(*path, *text, *filter, *lines, *page, *noColor, *withRegex)
+	p := parser.New(*path, *text, *filter, *lines, *page, *noColor, *withRegex, *ext)
 	// Start parsing the given file
 	p.Parse()
 }

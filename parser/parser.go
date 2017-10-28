@@ -8,11 +8,13 @@ import (
 	"log"
 	"os"
 	"os/user"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/olekukonko/tablewriter"
 )
 
 // Initial json Regexp
@@ -42,6 +44,14 @@ type Parser struct {
 	lines  int
 	page   int
 	regex  *regexp.Regexp
+	exts   []string
+}
+
+// stats for parsed files
+type stats struct {
+	path    string
+	offsets []int64
+	matches int
 }
 
 // Initialize json regexp on package initialization
@@ -50,26 +60,22 @@ func init() {
 }
 
 // New returns a new parser object
-func New(path, text, filter string, lines, page int, noColor, withRegex bool) *Parser {
+func New(path, text, filter string, lines, page int, noColor, withRegex bool, ext string) *Parser {
 	// Check if a path was provided
 	if path == "" {
-		exitWithError(fail("Error! Path is required"))
+		exitWithError("Error! Path is required")
 	}
 	// Check if a valid lines value was provided
 	if lines <= 0 {
-		exitWithError(fail("Error! Option flag -lines must be strictly positive"))
+		exitWithError("Error! Option flag -lines must be strictly positive")
 	}
 	// Check if a valid page value was provided
 	if page <= 0 {
-		exitWithError(fail("Error! Option flag -page must be strictly positive"))
+		exitWithError("Error! Option flag -page must be strictly positive")
 	}
 	// Check if a valid test type was provided
 	if !stringInSlice(text, textTypes) {
-		exitWithError(fail(fmt.Sprintf("Error! Accepted text types are: %s", strings.Join(textTypes, ", "))))
-	}
-	// Disables colorized output
-	if noColor {
-		color.NoColor = true
+		exitWithError(fmt.Sprintf("Error! Accepted text types are: %s", strings.Join(textTypes, ", ")))
 	}
 	// If the path starts with "~"
 	// it means the user is probably on a Unix based OS
@@ -77,9 +83,21 @@ func New(path, text, filter string, lines, page int, noColor, withRegex bool) *P
 	if strings.HasPrefix(path, "~") {
 		user, err := user.Current()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Cannot get current user:", err)
 		}
 		path = strings.Replace(path, "~", user.HomeDir, 1)
+	}
+	// Check if ext flag is present for directory path
+	info, err := os.Stat(path)
+	if err != nil {
+		log.Fatalf("Cannot get file stat info for %s. Error: %v", path, err)
+	}
+	if info.IsDir() && ext == "" {
+		exitWithError("Extensions flag is required for directory paths")
+	}
+	// Disables colorized output
+	if noColor {
+		color.NoColor = true
 	}
 	// Enable regex support is user asks for it
 	var regex *regexp.Regexp
@@ -88,7 +106,7 @@ func New(path, text, filter string, lines, page int, noColor, withRegex bool) *P
 		// If no filter is provided then regex is useless
 		// In this case notify the user
 		if filter == "" {
-			exitWithError(fail("Error! Regex is present but no filter value was provided!"))
+			exitWithError("Error! Regex is present but no filter value was provided!")
 		}
 		// Enable regex support for filter of length greater than 1
 		// If regex remains enabled when filter lenght is 1, strange output is given
@@ -97,11 +115,13 @@ func New(path, text, filter string, lines, page int, noColor, withRegex bool) *P
 			// Compile regex expression here to be user later in the parser
 			re, err := regexp.Compile(filter)
 			if err != nil {
-				exitWithError(fail(fmt.Sprintf("Regex parse error: %s", err.Error())))
+				exitWithError(fmt.Sprintf("Regex parse error: %s", err.Error()))
 			}
 			regex = re
 		}
 	}
+	// Get slice with all extensions
+	exts := strings.Split(ext, ",")
 
 	return &Parser{
 		path:   path,
@@ -110,22 +130,47 @@ func New(path, text, filter string, lines, page int, noColor, withRegex bool) *P
 		lines:  lines,
 		page:   page,
 		regex:  regex,
+		exts:   exts,
 	}
 }
 
 // Parse parses the file and shows the output to the user
 func (p *Parser) Parse() {
+	// Channel to receive all file stats
+	sc := make(chan stats)
+	// File stats slice
+	var fs []stats
+	// Get all file paths to traverse
+	paths := p.getPaths()
+	// Get number of paths
+	numPaths := len(paths)
+	// This should never happen :)
+	if numPaths == 0 {
+		log.Fatal("No paths found!")
+	}
 	// Set current page to what the parser gave us
 	currentPage := p.page
 	// Count all the lines and provide all page offsets
 	// These offsets help us navigate to any page instantly
 	// This is where all the "magic" happens
-	pageOffsets, err := p.countLines()
-	if err != nil {
-		log.Fatal(err)
+	for _, path := range paths {
+		go p.countLines(path, sc)
 	}
+	// Wait to receive all file offsets
+	for i := 0; i < numPaths; i++ {
+		stat := <-sc
+		fs = append(fs, stat)
+	}
+	// Start from the first ID
+	currentID := 1
+	// Get first stat and define it as current stat
+	currentStat := fs[currentID-1]
+	// Define current path
+	currentPath := currentStat.path
+	// Define starting offsets for the first file
+	currentOffsets := currentStat.offsets
 	// Determine total number of pages
-	numPages := len(pageOffsets)
+	numPages := len(currentOffsets)
 	// If nothing can be shown tell the user
 	if numPages == 0 {
 		fmt.Printf("%s\n", info("Sorry. Nothing to show here!"))
@@ -136,55 +181,77 @@ func (p *Parser) Parse() {
 		fmt.Printf("\n%s\n\n", fail(fmt.Sprintf("Error! Page number cannot be greater than %d", numPages)))
 		return
 	}
+	// Render the table with files
+	renderStats(fs, currentID)
+	fmt.Println()
 	// Get the first page output and print it
-	output := p.getFilePage(pageOffsets[currentPage-1])
-
+	output := p.getFilePage(currentPath, currentOffsets[currentPage-1])
+	// Send output to the console
 	fmt.Println(output)
-	// If no more pages are to be shown stop here
+	// If we haf only 1 file and no more pages are to be shown stop here
 	// If means we only have 1 page which we already displayed
-	if numPages == 1 {
+	if numPaths == 1 && numPages == 1 {
 		return
 	}
 	// Show a message telling the user at which page we are right now and prompt to navigate to whatever page
-	fmt.Print(alert(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
+	fmt.Print(alert(fmt.Sprintf("File: %s | Page [%d/%d]\nEnter page number to navigate\nEnter file id and page number separated by a comma to navigate to another file\nPress Ctrl+C to quit:", currentPath, currentPage, numPages)), " ")
 	// Start a new input scanner
 	in := bufio.NewScanner(os.Stdin)
 	// Scan for incoming input
 	for in.Scan() {
 		// We only accept page numbers here
 		// This is how the parser knows where to navigate next
-		inputPage, err := strconv.Atoi(in.Text())
+		id, page, err := extractNavigation(in.Text())
 		if err != nil {
 			fmt.Printf("\n%s\n\n", fail("Error! A valid number is required"))
-			fmt.Print(alert(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
+			fmt.Print(alert(fmt.Sprintf("File: %s | Page [%d/%d]\nEnter page number to navigate\nEnter file id and page number separated by a comma to navigate to another file\nPress Ctrl+C to quit:", currentPath, currentPage, numPages)), " ")
 		} else {
 			switch {
-			case inputPage > numPages:
-				fmt.Printf("\n%s\n\n", fail(fmt.Sprintf("Error! Page number cannot be greater than %d", numPages)))
-				fmt.Print(alert(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
-			case inputPage < 1:
-				fmt.Printf("\n%s\n\n", fail("Error! Page number cannot be smaller than 1"))
-				fmt.Print(alert(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
+			case page < 1 || page > numPages:
+				fmt.Printf("\n%s\n\n", fail(fmt.Sprintf("Error! Page number must be between 1 and %d", numPages)))
+				fmt.Print(alert(fmt.Sprintf("File: %s | Page [%d/%d]\nEnter page number to navigate\nEnter file id and page number separated by a comma to navigate to another file\nPress Ctrl+C to quit:", currentPath, currentPage, numPages)), " ")
+			case id > numPaths:
+				fmt.Printf("\n%s\n\n", fail(fmt.Sprintf("Error! ID number must be between 1 and %d", numPaths)))
+				fmt.Print(alert(fmt.Sprintf("File: %s | Page [%d/%d]\nEnter page number to navigate\nEnter file id and page number separated by a comma to navigate to another file\nPress Ctrl+C to quit:", currentPath, currentPage, numPages)), " ")
 			default:
-				currentPage = inputPage
-				output := p.getFilePage(pageOffsets[currentPage-1])
+				// If id = 0 the user wants to use the current file
+				// and does not want to change it
+				if id > 0 {
+					currentID = id
+					// Set current stat value
+					currentStat = fs[currentID-1]
+					// Set current path
+					currentPath = currentStat.path
+					// Set offsets for the first file
+					currentOffsets = currentStat.offsets
+					// Determine total number of pages
+					numPages = len(currentOffsets)
+				}
+				// Set current page
+				currentPage = page
+				fmt.Println()
+				// Render table with files
+				renderStats(fs, currentID)
+				fmt.Println()
+				// Get output for display
+				output := p.getFilePage(currentPath, currentOffsets[currentPage-1])
 				fmt.Printf("\n%s\n", output)
-				fmt.Print(alert(fmt.Sprintf("Page %d/%d. Enter page number to navigate or press Ctrl+C to quit:", currentPage, numPages)), " ")
+				fmt.Print(alert(fmt.Sprintf("File: %s | Page [%d/%d]\nEnter page number to navigate\nEnter file id and page number separated by a comma to navigate to another file\nPress Ctrl+C to quit:", currentPath, currentPage, numPages)), " ")
 			}
 		}
 	}
 
 	if err := in.Err(); err != nil {
-		log.Fatal(err)
+		log.Fatal("Scanner error:", err)
 	}
 }
 
 // Gets the output for a new page on the input file
-func (p *Parser) getFilePage(offset int64) string {
+func (p *Parser) getFilePage(path string, offset int64) string {
 	// Open the file
-	f, err := os.Open(p.path)
+	f, err := os.Open(path)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Cannot open file path %s, Error: %v", path, err)
 	}
 	defer f.Close()
 	// Navigate to the given offset
@@ -192,7 +259,7 @@ func (p *Parser) getFilePage(offset int64) string {
 	// and avoid parsing unnecessary lines
 	_, err = f.Seek(offset, io.SeekStart)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Cannot open file stats:", err)
 	}
 	// Start a new scanner
 	s := bufio.NewScanner(f)
@@ -221,7 +288,7 @@ func (p *Parser) getFilePage(offset int64) string {
 	}
 
 	if err := s.Err(); err != nil {
-		log.Fatal(err)
+		log.Fatal("File page scanner error", err)
 	}
 
 	return output.String()
@@ -230,18 +297,18 @@ func (p *Parser) getFilePage(offset int64) string {
 // This is where all the "magic" happens
 // Here we count all the file lines
 // and extract a slice with all page offsets
-func (p *Parser) countLines() ([]int64, error) {
+func (p *Parser) countLines(path string, ch chan stats) {
 	// Open the file
-	f, err := os.Open(p.path)
+	f, err := os.Open(path)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Cannot open file path %s, Error: %v", path, err)
 	}
 	defer f.Close()
 	// Get file size the know the position
 	// in the file of the last byte
 	fi, err := f.Stat()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Cannot open file stats:", err)
 	}
 	lastPosition := fi.Size()
 	// Start a new reader
@@ -263,6 +330,8 @@ func (p *Parser) countLines() ([]int64, error) {
 	// This is used to know if page has been hit (matched)
 	// by a filter provided by the user
 	var pageHit bool
+	// This is used to count the number of matches
+	var matches int
 	// We start by adding the first page offset which is 0
 	pageOffsets = append(pageOffsets, offset)
 	// Read all lines one by one
@@ -273,8 +342,11 @@ func (p *Parser) countLines() ([]int64, error) {
 		// This is the most time consuming portion of the app
 		line, err := r.ReadBytes('\n')
 		// If we have a line hit it means we have a page hit
-		if p.lineHit(line) {
+		// We also keep track of the total number of hits
+		hits := p.lineHits(line)
+		if hits > 0 {
 			pageHit = true
+			matches += hits
 		}
 		// Compute the current offset
 		offset += int64(len(line))
@@ -308,33 +380,42 @@ func (p *Parser) countLines() ([]int64, error) {
 			if currentLine < p.lines && pageHit {
 				filterOffsets = append(filterOffsets, pageOffsets[len(pageOffsets)-1])
 			}
+			// This will hold the offsets to be sent on the channel
+			var finalOffsets []int64
 			// If the input was filtered return filter page offsets
 			// Otherwise return normal page offsets
 			if p.filter != "" {
-				return filterOffsets, nil
+				finalOffsets = filterOffsets
+			} else {
+				finalOffsets = pageOffsets
 			}
-			return pageOffsets, nil
+			ch <- stats{
+				path:    path,
+				offsets: finalOffsets,
+				matches: matches,
+			}
+			return
 
 		case err != nil:
-			return nil, err
+			log.Fatal("Count lines error: ", err)
 		}
 	}
 }
 
 // This determines if line matches a given filter
-func (p *Parser) lineHit(line []byte) bool {
+func (p *Parser) lineHits(line []byte) int {
 	// If no filter was provided then we do not care about this
 	if p.filter == "" {
-		return false
+		return 0
 	}
 	// If regex was enbled, search by regex
 	// Otherwise search normally by text bytes
 	if p.regex != nil {
-		found := p.regex.Find(line)
-		return found != nil
+		matches := p.regex.FindAll(line, -1)
+		return len(matches)
 	}
 
-	return bytes.Contains(line, []byte(p.filter))
+	return bytes.Count(line, []byte(p.filter))
 }
 
 // This computes the final output
@@ -367,4 +448,96 @@ func (p *Parser) getOutput(text string) string {
 	}
 
 	return strings.Replace(text, p.filter, success(p.filter), -1)
+}
+
+// Get all file paths for a given root
+func (p *Parser) getPaths() []string {
+	// Define the final paths
+	var paths []string
+	// Walk the file/directory
+	err := filepath.Walk(p.path, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			log.Fatalf("File walk error for: %s", path)
+		}
+		// If the root path is a file
+		// just append use the path without verifying extentions
+		if p.path == path && !info.IsDir() {
+			paths = append(paths, path)
+		} else {
+			if info.IsDir() {
+				return nil
+			}
+			ext := strings.Replace(filepath.Ext(path), ".", "", 1)
+			// Check if current extension matches one of the desired extensions
+			if stringInSlice(ext, p.exts) {
+				paths = append(paths, path)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatal("Directory walk error: ", err)
+	}
+
+	return paths
+}
+
+// Extract navigation details (file id and page number)
+func extractNavigation(s string) (int, int, error) {
+	nums := strings.Split(s, ",")
+	if len(nums) > 2 {
+		exitWithError("More than 2 numbers provided")
+	}
+	// Only page number counts in this situation
+	// The user wants to use the current file
+	if len(nums) == 1 {
+		page, err := strconv.Atoi(strings.Trim(nums[0], " "))
+		if err != nil {
+			return 0, 0, err
+		}
+		return 0, page, nil
+	}
+	// The user wants to change the file and page implicitly
+	id, err := strconv.Atoi(strings.Trim(nums[0], " "))
+	if err != nil {
+		return 0, 0, err
+	}
+	page, err := strconv.Atoi(strings.Trim(nums[1], " "))
+	if err != nil {
+		return 0, 0, err
+	}
+	return id, page, nil
+}
+
+// Displays the current stats for all files
+func renderStats(fs []stats, id int) {
+	// Set table options
+	table := tablewriter.NewWriter(os.Stdout)
+
+	table.SetRowLine(true)
+	table.SetCenterSeparator("+")
+	table.SetColumnSeparator("|")
+	table.SetRowSeparator("-")
+	// Define table header
+	table.SetHeader([]string{"File ID", "File Path", "Number of Pages", "Number of Matches", "Current"})
+	// Compute the table
+	var current string
+	for k, v := range fs {
+		if id == k+1 {
+			current = "YES"
+		} else {
+			current = "NO"
+		}
+		row := []string{
+			strconv.Itoa(k + 1),
+			v.path,
+			strconv.Itoa(len(v.offsets)),
+			strconv.Itoa(v.matches),
+			current,
+		}
+		table.Append(row)
+	}
+	fmt.Println(info(fmt.Sprintf("Current File ID is %d", id)))
+	// Render the table
+	table.Render()
 }
