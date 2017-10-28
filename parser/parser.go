@@ -37,6 +37,7 @@ type stats struct {
 
 const (
 	// Size for the line scanner buffer
+	// For very large lines it is safe to put a larger buffer
 	scanBuf = 64 * 1024 * 1024
 	// This is the input format which asks the user for new input data
 	inputFmt = "File: %s | Page [%d/%d]\nEnter page number to navigate\nEnter file id and page number separated by a comma to navigate to another file\nPress Ctrl+C to quit:"
@@ -166,12 +167,12 @@ func (p *Parser) Parse() {
 	}
 	// Start from the first ID
 	currentID := 1
-	// Get first stat and define it as current stat
-	currentStat := fs[currentID-1]
+	// Get first file stat and define it as current stat
+	currentFile := fs[currentID-1]
 	// Define current path
-	currentPath := currentStat.path
+	currentPath := currentFile.path
 	// Define starting offsets for the first file
-	currentOffsets := currentStat.offsets
+	currentOffsets := currentFile.offsets
 	// Determine total number of pages
 	numPages := len(currentOffsets)
 	// If nothing can be shown tell the user
@@ -184,7 +185,7 @@ func (p *Parser) Parse() {
 		fmt.Printf("\n%s\n\n", fail(fmt.Sprintf("Error! Page number cannot be greater than %d", numPages)))
 		return
 	}
-	// Render the table with files
+	// Render the table with file stats
 	renderStats(fs, currentID)
 	fmt.Println()
 	// Get the first page output and print it
@@ -217,16 +218,16 @@ func (p *Parser) Parse() {
 				fmt.Printf("\n%s\n\n", fail(fmt.Sprintf("Error! ID number must be between 1 and %d", numPaths)))
 				fmt.Print(alert(fmt.Sprintf(inputFmt, currentPath, currentPage, numPages)), " ")
 			default:
-				// If id = 0 the user wants to use the current file
-				// and does not want to change it
+				// Only if id > 0 then the user wants to change the current file
+				// If the only wants to change the page it sends id=0
 				if id > 0 {
 					currentID = id
-					// Set current stat value
-					currentStat = fs[currentID-1]
+					// Set current file stat value
+					currentFile = fs[currentID-1]
 					// Set current path
-					currentPath = currentStat.path
+					currentPath = currentFile.path
 					// Set offsets for the first file
-					currentOffsets = currentStat.offsets
+					currentOffsets = currentFile.offsets
 					// Determine total number of pages
 					numPages = len(currentOffsets)
 				}
@@ -493,7 +494,8 @@ func extractNavigation(s string) (int, int, error) {
 		exitWithError("More than 2 numbers provided")
 	}
 	// Only page number counts in this situation
-	// The user wants to use the current file
+	// The user wants to use the current file and only change the page
+	// So we return id=0 as a convention here
 	if len(nums) == 1 {
 		page, err := strconv.Atoi(strings.Trim(nums[0], " "))
 		if err != nil {
