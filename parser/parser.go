@@ -145,7 +145,7 @@ func (p *Parser) Parse() {
 	var fs []stats
 	// Get all file paths to traverse
 	paths := p.getPaths()
-	// Get number of paths
+	// Get number of possible paths
 	numPaths := len(paths)
 	// This should never happen :)
 	if numPaths == 0 {
@@ -163,8 +163,12 @@ func (p *Parser) Parse() {
 	// Wait to receive all file offsets
 	for i := 0; i < numPaths; i++ {
 		stat := <-sc
-		fs = append(fs, stat)
+		if len(stat.offsets) > 0 {
+			fs = append(fs, stat)
+		}
 	}
+	// Readjust with files that have more than 0 pages
+	numPaths = len(fs)
 	// Start from the first ID
 	currentID := 1
 	// Get first file stat and define it as current stat
