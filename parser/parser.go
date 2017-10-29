@@ -350,12 +350,12 @@ func (p *Parser) countLines(path string, ch chan stats) {
 		// This may take a while depending on the file size
 		// This is the most time consuming portion of the app
 		line, err := r.ReadBytes('\n')
-		// If we have a line hit it means we have a page hit
+		// If we have at least 1 line hit it means we have a page hit
 		// We also keep track of the total number of hits
-		hits := p.lineHits(line)
-		if hits > 0 {
+		numHits := p.lineHits(line)
+		if numHits > 0 {
 			pageHit = true
-			matches += hits
+			matches += numHits
 		}
 		// Compute the current offset
 		offset += int64(len(line))
@@ -374,8 +374,7 @@ func (p *Parser) countLines(path string, ch chan stats) {
 			if offset < lastPosition {
 				pageOffsets = append(pageOffsets, offset)
 			}
-			// Reset all counters
-			// and also page hit
+			// Reset all counters and also the page hit
 			currentLine = 0
 			offset = 0
 			pageHit = false
@@ -403,15 +402,16 @@ func (p *Parser) countLines(path string, ch chan stats) {
 				offsets: finalOffsets,
 				matches: matches,
 			}
+			// Exit the function to avoid goroutine leak
 			return
 
 		case err != nil:
-			log.Fatal("Count lines error: ", err)
+			log.Fatal("Count lines error:", err)
 		}
 	}
 }
 
-// lineHits determines if line matches a given filter
+// lineHits determines the number of line matches for a given filter
 func (p *Parser) lineHits(line []byte) int {
 	// If no filter was provided then we do not care about this
 	if p.filter == "" {
