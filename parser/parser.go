@@ -175,6 +175,11 @@ func (p *Parser) Parse() {
 	}
 	// Readjust with files that have more than 0 pages
 	numPaths = len(fs)
+	// If nothing can be shown tell the user
+	if numPaths == 0 {
+		fmt.Printf("%s\n", info("Sorry. Nothing to show here!"))
+		return
+	}
 	// Start from the first ID
 	currentID := 1
 	// Get first file stat and define it as current stat
