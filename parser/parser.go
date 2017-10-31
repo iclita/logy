@@ -36,6 +36,13 @@ type stats struct {
 }
 
 const (
+	// Graphical display of a checkmark
+	yesMark = "\u2714"
+	// Graphical display of a multiplication mark
+	noMark = "\u2715"
+)
+
+const (
 	// Size for the line scanner buffer
 	// For very large lines it is safe to put a larger buffer
 	scanBuf = 64 * 1024 * 1024
@@ -534,9 +541,9 @@ func renderStats(fs []stats, id int) {
 	var current string
 	for k, v := range fs {
 		if id == k+1 {
-			current = "YES"
+			current = yesMark
 		} else {
-			current = "NO"
+			current = noMark
 		}
 		row := []string{
 			strconv.Itoa(k + 1),

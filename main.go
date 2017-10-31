@@ -45,6 +45,17 @@ func showHelp() {
 }
 
 func main() {
+	fmt.Println()
+	// If no command line flags are provided show help information
+	if len(os.Args) == 1 {
+		showHelp()
+		return
+	}
+	// If -h or --help command line flags are provided show help information
+	if len(os.Args) == 2 && (os.Args[1] == "-h" || os.Args[1] == "--help") {
+		showHelp()
+		return
+	}
 	// Capture and parse incoming commnad line flags
 	path := flag.String("path", "", "File/directory path")
 	text := flag.String("text", "plain", "Text type to parse. Defaults to plain")
@@ -56,13 +67,6 @@ func main() {
 	noColor := flag.Bool("no-color", false, "Disable color output. Defaults to false")
 
 	flag.Parse()
-
-	fmt.Println()
-	// If no command line flags are provided show help information
-	if len(os.Args) == 1 {
-		showHelp()
-		return
-	}
 	// Create a new parser object
 	p := parser.New(*path, *text, *filter, *lines, *page, *noColor, *withRegex, *ext)
 	// Start parsing the given file
