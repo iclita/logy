@@ -175,7 +175,7 @@ func (p *Parser) Parse() {
 	}
 	// Readjust with files that have more than 0 pages
 	numPaths = len(fs)
-	// If nothing can be shown tell the user
+	// If nothing was found exit the program
 	if numPaths == 0 {
 		fmt.Printf("%s\n", info("Sorry. Nothing to show here!"))
 		return
@@ -190,8 +190,8 @@ func (p *Parser) Parse() {
 	currentOffsets := currentFile.offsets
 	// Determine total number of pages
 	numPages := len(currentOffsets)
-	// If nothing can be shown tell the user
-	if numPages == 0 {
+	// If only 1 file was found but with no pages exit the program
+	if numPaths == 1 && numPages == 0 {
 		fmt.Printf("%s\n", info("Sorry. Nothing to show here!"))
 		return
 	}
