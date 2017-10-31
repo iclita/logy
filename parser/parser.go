@@ -35,19 +35,18 @@ type stats struct {
 	matches int
 }
 
+// Size for the line scanner buffer
+// For very large lines it is safe to put a larger buffer
+const scanBuf = 64 * 1024 * 1024
+
+// This is the input format which asks the user for new input data
+const inputFmt = "File: %s | Page [%d/%d]\nEnter page number to navigate\nEnter file id and page number separated by a comma to navigate to another file\nPress Ctrl+C if you want to quit:"
+
 const (
 	// Graphical display of a checkmark
 	yesMark = "\u2714"
 	// Graphical display of a multiplication mark
 	noMark = "\u2715"
-)
-
-const (
-	// Size for the line scanner buffer
-	// For very large lines it is safe to put a larger buffer
-	scanBuf = 64 * 1024 * 1024
-	// This is the input format which asks the user for new input data
-	inputFmt = "File: %s | Page [%d/%d]\nEnter page number to navigate\nEnter file id and page number separated by a comma to navigate to another file\nPress Ctrl+C to quit:"
 )
 
 // Initial json Regexp
