@@ -190,11 +190,6 @@ func (p *Parser) Parse() {
 	currentOffsets := currentFile.offsets
 	// Determine total number of pages
 	numPages := len(currentOffsets)
-	// If only 1 file was found but with no pages exit the program
-	if numPaths == 1 && numPages == 0 {
-		fmt.Printf("%s\n", info("Sorry. Nothing to show here!"))
-		return
-	}
 	// The current page cannot be greater than the total number of pages
 	if currentPage > numPages {
 		fmt.Printf("\n%s\n\n", fail(fmt.Sprintf("Error! Page number cannot be greater than %d", numPages)))
