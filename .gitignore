@@ -17,3 +17,6 @@ logy
 
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
+
+# Visual Studio Code workspace folder, see: https://code.visualstudio.com/docs/getstarted/settings
+.vscode/
