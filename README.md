@@ -14,19 +14,7 @@ The best parser for filtering and handling files of any size with ease. Inspecti
 
 There is no need to install anything. If you want to skip the setup process and just use the tool, follow [this link](https://github.com/iulianclita/logy/releases) and use the build that is specific to your OS (Mac, Linux or Windows) and architecture (32 or 64 bit)
 
-Otherwise follow the next steps. This way you can contribute to the project :)
-
-To setup $GOPATH follow [this link](https://golang.org/doc/code.html#Overview)
-
-```bash
-$ cd $GOPATH/src/github.com/iulianclita
-$ git clone git@github.com:iulianclita/logy.git
-$ cd logy/
-$ go get -u github.com/fatih/color
-$ go get -u github.com/olekukonko/tablewriter
-$ go install
-$ logy # Make sure $GOPATH/bin was added to your global $PATH variable
-```
+Otherwise clone the repository. This way you can contribute to the project :)
 
 ## Usage
 
