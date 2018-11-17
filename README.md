@@ -5,7 +5,7 @@ The best parser for filtering and handling files of any size with ease. Inspecti
 ## Features
 
 - Written in pure Go (Golang)
-- Requires Go > 1.7 to build. Just visit [this link](https://golang.org/doc/install) on how to install Go on your machine
+- Requires Go >= 1.11 to build. Just visit [this link](https://golang.org/doc/install) on how to install Go on your machine
 - Simple installation process
 - Very easy to use and highly intuitive
 - Works on Mac, Linux and Windows
