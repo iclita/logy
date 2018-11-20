@@ -12,9 +12,10 @@ import (
 // generated binary file used for testing
 const binaryName = "logy"
 
-// helperGenerateBinary is a test helper function
+// generateBinary is a test helper function
 // that generates the binary file
-func helperGenerateBinary(t *testing.T) func() {
+func generateBinary(t *testing.T) func() {
+	t.Helper()
 	cmd := exec.Command("go", "build", "-o", binaryName)
 	err := cmd.Run()
 	if err != nil {
@@ -30,7 +31,7 @@ func helperGenerateBinary(t *testing.T) func() {
 // TestNew tests if our parser can be instantiated
 // successfully based upon the input command line flags
 func TestNew(t *testing.T) {
-	defer helperGenerateBinary(t)()
+	defer generateBinary(t)()
 
 	tests := []struct {
 		flags []string
