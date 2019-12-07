@@ -1,83 +1,58 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/iulianclita/logy/parser"
-	"github.com/urfave/cli/v2"
+	"github.com/spf13/cobra"
+)
+
+var (
+	text      string
+	filter    string
+	lines     int
+	page      int
+	ext       string
+	withRegex bool
+	noColor   bool
 )
 
 func main() {
-	app := &cli.App{
-		Name:        "logy",
-		Usage:       "smart parsing",
-		UsageText:   "logy -lines=10 -filter=error /path/to/file",
-		Description: "Filter and handle log files of any size with ease.",
-		HideVersion: true,
-		// Define flags
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "text",
-				Value: "plain",
-				Usage: "Text type to parse (plain/json). Defaults to plain",
-			},
-			&cli.StringFlag{
-				Name:  "filter",
-				Value: "",
-				Usage: "Text to filter by",
-			},
-			&cli.IntFlag{
-				Name:  "lines",
-				Value: 50,
-				Usage: "Number of lines per page. Defaults to 50",
-			},
-			&cli.IntFlag{
-				Name:  "page",
-				Value: 1,
-				Usage: "Current page number. Defaults to 1",
-			},
-			&cli.BoolFlag{
-				Name:  "with-regex",
-				Value: false,
-				Usage: "Enable regex support. Defaults to false",
-			},
-			&cli.StringFlag{
-				Name:  "ext",
-				Value: "",
-				Usage: "Accepted file extensions to search in folder",
-			},
-			&cli.BoolFlag{
-				Name:  "no-color",
-				Value: false,
-				Usage: "Disable color output. Defaults to false",
-			},
-		},
-		// Execute command action
-		Action: func(c *cli.Context) error {
-			if c.NArg() == 0 {
-				cli.ShowAppHelp(c)
-				return nil
+	// Define command
+	appCmd := &cobra.Command{
+		Use:   "logy /path/to/file",
+		Short: "Filter and handle log files of any size with ease",
+		Long:  `Filter and handle log files of any size with ease`,
+		Args:  cobra.RangeArgs(0, 1),
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 1 {
+				if err := cmd.Help(); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				return
 			}
-			// Extract positional arguments
-			path := c.Args().First()
-			// Extract flags
-			text := c.String("text")
-			filter := c.String("filter")
-			lines := c.Int("lines")
-			page := c.Int("page")
-			withRegex := c.Bool("with-regex")
-			ext := c.String("ext")
-			noColor := c.Bool("no-color")
-			// Create a new parser object
+			path := args[0]
+			// Create parser object
 			p := parser.New(path, text, filter, lines, page, noColor, withRegex, ext)
 			// Start parsing the given file
 			p.Parse()
-			return nil
 		},
 	}
 
-	if err := app.Run(os.Args); err != nil {
-		log.Fatal(err)
+	// Parse flags
+	appCmd.PersistentFlags().StringVarP(&text, "text", "t", "plain", "Text type to parse (plain/json)")
+	appCmd.PersistentFlags().StringVarP(&filter, "filter", "f", "", "Text to filter by")
+	appCmd.PersistentFlags().IntVarP(&lines, "lines", "l", 50, "Number of lines per page")
+	appCmd.PersistentFlags().IntVarP(&page, "page", "p", 1, "Current page number")
+	appCmd.PersistentFlags().StringVarP(&ext, "ext", "e", "", "Accepted file extensions to search in folder")
+	appCmd.PersistentFlags().BoolVar(&withRegex, "with-regex", false, "Enable regex support")
+	appCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "Disable color output")
+
+	// Run command
+	if err := appCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }

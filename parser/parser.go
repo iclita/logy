@@ -40,7 +40,7 @@ type stats struct {
 const scanBuf = 64 * 1024 * 1024
 
 // This is the input format which asks the user for new input data
-const inputFmt = "File: %s | Page [%d/%d]\nEnter page number to navigate\nEnter file id and page number separated by a comma to navigate to another file\nPress Ctrl+D if you want to quit:"
+const inputFmt = "File: %s | Page [%d/%d]\nEnter page number to navigate\nEnter file id and page number separated by a comma to navigate to another file\nPress Ctrl+C if you want to quit:"
 
 const (
 	// Graphical display of a checkmark
