@@ -40,7 +40,6 @@ func main() {
 			p.Parse()
 		},
 	}
-
 	// Parse flags
 	appCmd.PersistentFlags().StringVarP(&text, "text", "t", "plain", "Text type to parse (plain/json)")
 	appCmd.PersistentFlags().StringVarP(&filter, "filter", "f", "", "Text to filter by")
@@ -49,7 +48,6 @@ func main() {
 	appCmd.PersistentFlags().StringVarP(&ext, "ext", "e", "", "Accepted file extensions to search in folder")
 	appCmd.PersistentFlags().BoolVar(&withRegex, "with-regex", false, "Enable regex support")
 	appCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "Disable color output")
-
 	// Run command
 	if err := appCmd.Execute(); err != nil {
 		fmt.Println(err)
