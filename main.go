@@ -8,17 +8,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	text      string
-	filter    string
-	lines     int
-	page      int
-	ext       string
-	withRegex bool
-	noColor   bool
-)
-
 func main() {
+	// Flag placeholders
+	var (
+		text      string
+		filter    string
+		lines     int
+		page      int
+		ext       string
+		withRegex bool
+		noColor   bool
+	)
 	// Define command
 	appCmd := &cobra.Command{
 		Use:   "logy /path/to/file",
