@@ -12,7 +12,7 @@ The best parser for filtering and handling files of any size with ease. Inspecti
 
 ## Installation
 
-There is no need to install anything. If you want to skip the setup process and just use the tool, follow [this link](https://github.com/iulianclita/logy/releases) and use the build that is specific to your OS (Mac, Linux or Windows) and architecture (32 or 64 bit)
+There is no need to install anything. If you want to skip the setup process and just use the tool, follow [this link](https://github.com/iulianclita/logy/releases) and use the build that is specific to your OS (Mac, Linux or Windows). All binaries were built against 64bit architectures.
 
 Otherwise clone the repository. This way you can contribute to the project :)
 
