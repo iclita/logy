@@ -271,8 +271,7 @@ func (p *Parser) getFilePage(path string, offset int64) string {
 	// Navigate to the given offset
 	// This way we skip the part we don't need
 	// and avoid parsing unnecessary lines
-	_, err = f.Seek(offset, io.SeekStart)
-	if err != nil {
+	if _, err = f.Seek(offset, io.SeekStart); err != nil {
 		log.Fatal("Cannot open file stats:", err)
 	}
 	// Start a new scanner
@@ -438,10 +437,8 @@ func (p *Parser) getOutput(text string) string {
 	// Format input as JSON if needed
 	if p.text == "json" {
 		jsonMatches := jsonReg.FindAllString(text, -1)
-		if jsonMatches != nil {
-			for _, m := range jsonMatches {
-				text = strings.Replace(text, m, formatJSON(m), -1)
-			}
+		for _, m := range jsonMatches {
+			text = strings.Replace(text, m, formatJSON(m), -1)
 		}
 	}
 	// If no filter was provided give the text as it is

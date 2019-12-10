@@ -23,10 +23,10 @@ func stringInSlice(s string, list []string) bool {
 // Formats input as pretty JSON
 func formatJSON(text string) string {
 	var prettyJSON bytes.Buffer
-	err := json.Indent(&prettyJSON, []byte(text), "", strings.Repeat(" ", 2))
-	if err != nil {
+	if err := json.Indent(&prettyJSON, []byte(text), "", strings.Repeat(" ", 2)); err != nil {
 		log.Fatal("JSON parse error: ", err)
 	}
+
 	return prettyJSON.String()
 }
 
